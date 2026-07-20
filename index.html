@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MRX Forecast Discussion</title>
+<style>
+  :root{
+    --bg: #EFF3F5;
+    --panel: #E3E9EC;
+    --ink: #1B2430;
+    --ink-soft: #4A5A68;
+    --rule: #C7D2D8;
+    --accent: #1C6E8C;
+    --accent-soft: #D9E7EC;
+    --mono: ui-monospace, "SF Mono", "Menlo", "Consolas", monospace;
+    --serif: ui-serif, Georgia, "Times New Roman", serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg: #10161C;
+      --panel: #182029;
+      --ink: #E4E9EC;
+      --ink-soft: #97A6B0;
+      --rule: #2B3742;
+      --accent: #6FB1D6;
+      --accent-soft: #1D2A32;
+    }
+  }
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+    padding-bottom: 3rem;
+  }
+  a{ color: var(--accent); }
+
+  header{
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: var(--bg);
+    border-bottom: 1px solid var(--rule);
+    padding: 0.85rem 1.1rem;
+  }
+  .header-row{
+    max-width: 680px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+  h1{
+    font-family: var(--serif);
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: 0.01em;
+  }
+  h1 small{
+    display:block;
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    font-weight: 400;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 0.15rem;
+  }
+  button#refresh{
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 0.55rem 0.8rem;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  button#refresh:active{ opacity: 0.75; }
+  button#refresh:disabled{ opacity: 0.5; }
+
+  main{
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 1.1rem;
+  }
+
+  .meta-strip{
+    font-family: var(--mono);
+    font-size: 0.74rem;
+    color: var(--ink-soft);
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 0.7rem 0.85rem;
+    margin-bottom: 1.6rem;
+    line-height: 1.5;
+  }
+  .meta-strip .office{ color: var(--ink); font-weight: 600; }
+  .meta-strip .row{ display:flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+
+  .status{
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    padding: 2rem 0;
+    text-align: center;
+  }
+  .status.error{ color: #B5533F; }
+  .status a{ display:inline-block; margin-top: 0.6rem; }
+
+  section.afd-section{
+    margin-bottom: 1.9rem;
+  }
+  .heading-row{
+    display:flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 0.35rem;
+    margin-bottom: 0.75rem;
+  }
+  .heading-row h2{
+    font-family: var(--sans);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--accent);
+    margin: 0;
+  }
+  .heading-row .sub{
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--ink-soft);
+  }
+  .issued-at{
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--ink-soft);
+    margin: -0.4rem 0 0.7rem 0;
+  }
+
+  .afd-section p{
+    font-family: var(--serif);
+    font-size: 1.05rem;
+    line-height: 1.62;
+    margin: 0 0 0.9rem 0;
+  }
+  .afd-section ul{
+    margin: 0 0 0.9rem 0;
+    padding-left: 1.2rem;
+  }
+  .afd-section li{
+    font-family: var(--serif);
+    font-size: 1.05rem;
+    line-height: 1.55;
+    margin-bottom: 0.55rem;
+  }
+  .afd-section .line{
+    font-family: var(--serif);
+    font-size: 1.02rem;
+    line-height: 1.5;
+    margin: 0 0 0.25rem 0;
+  }
+  .afd-section pre{
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    line-height: 1.45;
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 0.75rem;
+    overflow-x: auto;
+    white-space: pre;
+  }
+
+  footer{
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 0 1.1rem;
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--ink-soft);
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-row">
+    <h1>Area Forecast Discussion<small>NWS Morristown / Tri-Cities &mdash; MRX</small></h1>
+    <button id="refresh">Refresh</button>
+  </div>
+</header>
+
+<main id="main">
+  <div class="status" id="status">Loading latest discussion&hellip;</div>
+</main>
+
+<footer id="footer" style="display:none">
+  Source: <a id="source-link" href="https://forecast.weather.gov/product.php?site=NWS&issuedby=MRX&product=AFD&format=CI&version=1&glossary=1" target="_blank" rel="noopener">forecast.weather.gov</a>
+</footer>
+
+<script>
+(function(){
+  // Change LOCATION_ID if you ever want to point this at a different office.
+  var LOCATION_ID = "MRX";
+  var API_URL = "https://api.weather.gov/products/types/AFD/locations/" + LOCATION_ID + "/latest";
+  var NWS_PAGE = "https://forecast.weather.gov/product.php?site=NWS&issuedby=" + LOCATION_ID + "&product=AFD&format=CI&version=1&glossary=1";
+  var AUTO_REFRESH_MS = 10 * 60 * 1000; // 10 minutes
+
+  var mainEl = document.getElementById("main");
+  var footerEl = document.getElementById("footer");
+  var refreshBtn = document.getElementById("refresh");
+  var timer = null;
+
+  function setStatus(msg, isError){
+    mainEl.innerHTML = '<div class="status' + (isError ? ' error' : '') + '">' + msg + '</div>';
+    footerEl.style.display = "none";
+  }
+
+  function escapeHtml(s){
+    return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+
+  // Split raw text into paragraphs / bullet items, reflowing hard-wrapped lines.
+  function reflow(bodyText){
+    var lines = bodyText.split("\n");
+    var blocks = [];
+    var current = null;
+    var currentType = "p";
+
+    function flush(){
+      if (current !== null && current.trim() !== "") {
+        blocks.push({ type: currentType, text: current.trim() });
+      }
+      current = null;
+    }
+
+    for (var i = 0; i < lines.length; i++){
+      var raw = lines[i];
+      var trimmed = raw.trim();
+
+      if (trimmed === ""){
+        flush();
+        continue;
+      }
+      if (/^-\s+/.test(trimmed)){
+        flush();
+        current = trimmed.replace(/^-\s+/, "");
+        currentType = "li";
+        continue;
+      }
+      if (current === null){
+        current = trimmed;
+        currentType = "p";
+      } else {
+        current += " " + trimmed;
+      }
+    }
+    flush();
+    return blocks;
+  }
+
+  function blocksToHtml(blocks){
+    var html = "";
+    var inList = false;
+    blocks.forEach(function(b){
+      if (b.type === "li"){
+        if (!inList){ html += "<ul>"; inList = true; }
+        html += "<li>" + escapeHtml(b.text) + "</li>";
+      } else {
+        if (inList){ html += "</ul>"; inList = false; }
+        html += "<p>" + escapeHtml(b.text) + "</p>";
+      }
+    });
+    if (inList) html += "</ul>";
+    return html;
+  }
+
+  function linesAsRows(bodyText){
+    return bodyText.split("\n")
+      .map(function(l){ return l.trim(); })
+      .filter(function(l){ return l !== ""; })
+      .map(function(l){ return '<p class="line">' + escapeHtml(l) + "</p>"; })
+      .join("");
+  }
+
+  function parseAFD(text){
+    text = text.replace(/\r\n/g, "\n");
+
+    // Pull office name + issuance line for the meta strip.
+    var officeMatch = text.match(/National Weather Service[^\n]*/);
+    var office = officeMatch ? officeMatch[0].trim() : LOCATION_ID;
+    var issuedLines = [];
+    if (officeMatch){
+      var afterOffice = text.slice(officeMatch.index + officeMatch[0].length);
+      var timeMatch = afterOffice.match(/\s*\n([^\n]+)/);
+      if (timeMatch) issuedLines.push(timeMatch[1].trim());
+    }
+
+    // Cut off signature block after the final "$$".
+    var endIdx = text.lastIndexOf("$$");
+    var body = endIdx !== -1 ? text.slice(0, endIdx) : text;
+
+    // Drop everything before the first section marker (WMO header, title line).
+    var firstDot = body.search(/^\.[A-Z0-9 &\/]+\.\.\./m);
+    if (firstDot > -1) body = body.slice(firstDot);
+
+    var rawSections = body.split(/^&&\s*$/m);
+    var sections = [];
+
+    rawSections.forEach(function(chunk){
+      chunk = chunk.replace(/^\s+|\s+$/g, "");
+      if (!chunk) return;
+
+      var headingMatch = chunk.match(/^\.([A-Z0-9 \/]+)\.\.\.(.*)$/m);
+      var heading = headingMatch ? headingMatch[1].trim() : null;
+      var subheading = headingMatch && headingMatch[2] ? headingMatch[2].trim() : "";
+      var rest = headingMatch ? chunk.slice(headingMatch.index + headingMatch[0].length) : chunk;
+
+      // Pull an "Issued at ..." / "Updated at ..." line if present, wherever
+      // it falls (some sections have a "(12Z TAFS)"-style line before it).
+      var issuedAt = null;
+      var issuedMatch = rest.match(/(?:Issued|Updated) at[^\n]*/);
+      if (issuedMatch){
+        var leadIn = rest.slice(0, issuedMatch.index).trim();
+        if (leadIn && leadIn.length < 40){
+          subheading = subheading ? (subheading + " " + leadIn) : leadIn;
+        }
+        issuedAt = issuedMatch[0].trim();
+        rest = rest.slice(issuedMatch.index + issuedMatch[0].length);
+      }
+
+      sections.push({
+        heading: heading || "Discussion",
+        subheading: subheading,
+        issuedAt: issuedAt,
+        body: rest.replace(/^\s+/, "")
+      });
+    });
+
+    return { office: office, issuedLines: issuedLines, sections: sections };
+  }
+
+  function render(parsed, fetchedAt){
+    var html = "";
+    html += '<div class="meta-strip">';
+    html += '<div class="office">' + escapeHtml(parsed.office) + "</div>";
+    if (parsed.issuedLines.length){
+      html += '<div class="row"><span>' + escapeHtml(parsed.issuedLines.join(" ")) + "</span></div>";
+    }
+    html += '<div class="row"><span>Checked ' + escapeHtml(fetchedAt) + "</span></div>";
+    html += "</div>";
+
+    parsed.sections.forEach(function(sec){
+      html += '<section class="afd-section">';
+      html += '<div class="heading-row"><h2>' + escapeHtml(sec.heading) + "</h2>";
+      if (sec.subheading) html += '<span class="sub">' + escapeHtml(sec.subheading) + "</span>";
+      html += "</div>";
+      if (sec.issuedAt) html += '<div class="issued-at">' + escapeHtml(sec.issuedAt) + "</div>";
+
+      var h = sec.heading.toUpperCase();
+      if (h.indexOf("POINT TEMPS") > -1 || h.indexOf("POPS") > -1){
+        html += "<pre>" + escapeHtml(sec.body.trim()) + "</pre>";
+      } else if (h.indexOf("WATCH") > -1 || h.indexOf("WARNING") > -1 || h.indexOf("ADVISOR") > -1){
+        html += linesAsRows(sec.body);
+      } else {
+        html += blocksToHtml(reflow(sec.body));
+      }
+      html += "</section>";
+    });
+
+    mainEl.innerHTML = html;
+    footerEl.style.display = "block";
+  }
+
+  function load(){
+    refreshBtn.disabled = true;
+    refreshBtn.textContent = "Loading\u2026";
+    setStatus("Loading latest discussion\u2026");
+
+    fetch(API_URL, { headers: { "Accept": "application/ld+json" } })
+      .then(function(res){
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return res.json();
+      })
+      .then(function(data){
+        var text = data.productText || "";
+        if (!text) throw new Error("No product text returned");
+        var parsed = parseAFD(text);
+        var fetchedAt = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        render(parsed, fetchedAt);
+      })
+      .catch(function(err){
+        setStatus(
+          "Couldn&rsquo;t load the discussion (" + escapeHtml(String(err.message || err)) + ").<br>" +
+          '<a href="' + NWS_PAGE + '" target="_blank" rel="noopener">Open it on weather.gov instead</a>',
+          true
+        );
+      })
+      .then(function(){
+        refreshBtn.disabled = false;
+        refreshBtn.textContent = "Refresh";
+      });
+  }
+
+  refreshBtn.addEventListener("click", load);
+  document.addEventListener("visibilitychange", function(){
+    if (document.visibilityState === "visible") load();
+  });
+
+  load();
+  timer = setInterval(load, AUTO_REFRESH_MS);
+})();
+</script>
+</body>
+</html>
